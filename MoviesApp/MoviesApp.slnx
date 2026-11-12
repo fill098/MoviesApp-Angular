@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="MoviesApp.DataAccess/MoviesApp.DataAccess.csproj" Id="a7625215-6248-4b77-888a-d0062576205a" />
+  <Project Path="MoviesApp/MoviesApp.csproj" />
+  <Project Path="MoviesApp.Domain/MoviesApp.Domain.csproj" />
+</Solution>
