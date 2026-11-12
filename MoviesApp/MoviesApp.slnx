@@ -4,7 +4,11 @@
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
   </Folder>
-  <Project Path="MoviesApp.DataAccess/MoviesApp.DataAccess.csproj" Id="a7625215-6248-4b77-888a-d0062576205a" />
-  <Project Path="MoviesApp/MoviesApp.csproj" />
-  <Project Path="MoviesApp.Domain/MoviesApp.Domain.csproj" />
+  <Project Path="MovieApp.Dtos/MovieApp.Dtos.csproj" Id="2620e788-588c-44c7-8718-57ccf6f57e3e" />
+  <Project Path="MovieApp.Mappers/MovieApp.Mappers.csproj" Id="9a7e25eb-eb57-40dd-ad40-70a10711d27f" />
+  <Project Path="MovieApp.Common/MovieApp.Common.csproj" Id="f1cc1ef1-7046-40a6-aff4-09428ead40e8" />
+  <Project Path="MovieApp.Services/MovieApp.Services.csproj" />
+  <Project Path="MoviesApp.DataAccess/MovieApp.DataAccess.csproj" Id="a7625215-6248-4b77-888a-d0062576205a" />
+  <Project Path="MoviesApp.Domain/MovieApp.Domain.csproj" />
+  <Project Path="MoviesApp/MovieApp.Api.csproj" />
 </Solution>

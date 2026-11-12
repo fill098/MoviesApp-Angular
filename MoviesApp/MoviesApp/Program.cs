@@ -1,27 +1,30 @@
+using MovieApp.Api.Extensions;
 using MoviesApp.DataAccess;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddDataAccess(builder.Configuration);
+builder.Services
+    .AddDataAccess(builder.Configuration)
+    .AddJwtAuthentication()
+    .AddOpenApiDocumentation();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+    // /openapi/v1.json and the Scalar UI at /scalar
+    app.MapApiDocs();
 }
 
 app.UseHttpsRedirection();
 
+// Authentication (who are you?) must run before Authorization (are you allowed?)
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
