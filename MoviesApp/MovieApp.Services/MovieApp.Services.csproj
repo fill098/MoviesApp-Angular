@@ -7,11 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mapster" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MovieApp.Common\MovieApp.Common.csproj" />
+    <ProjectReference Include="..\MovieApp.DataAccess\MovieApp.DataAccess.csproj" />
     <ProjectReference Include="..\MovieApp.Dtos\MovieApp.Dtos.csproj" />
     <ProjectReference Include="..\MovieApp.Domain\MovieApp.Domain.csproj" />
   </ItemGroup>
