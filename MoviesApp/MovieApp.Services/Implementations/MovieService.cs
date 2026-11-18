@@ -1,4 +1,5 @@
 using MapsterMapper;
+using MovieApp.Common.Extensinons;
 using MovieApp.DataAccess.Repositories.Abstractions;
 using MovieApp.Domain.Entities;
 using MovieApp.Dtos.Movies;
@@ -27,5 +28,16 @@ public class MovieService : IMovieService
         List<MovieReadDto> movieReadDtos = _mapper.Map<List<MovieReadDto>>(moviesDb);
 
         return movieReadDtos;
+    }
+
+    public async Task<MovieReadDto> GetMovieByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        var movieDb = await _movieRepository.GetByIdAsync(id, cancellationToken);
+        if (movieDb == null)
+        {
+            throw new NotFoundException(nameof(Movie), id);
+        }
+        var movieDto = _mapper.Map<MovieReadDto>(movieDb);
+        return movieDto;
     }
 }

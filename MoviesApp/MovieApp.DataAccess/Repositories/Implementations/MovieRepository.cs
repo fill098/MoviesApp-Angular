@@ -22,4 +22,14 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
             .OrderBy(m => m.Title);
         return query.ToListAsync(cancellationToken);
     }
+
+    public override Task<Movie?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .AsNoTracking()
+            .Include(m => m.Director)
+            .Include(m => m.Actors)
+            .Include(m => m.Reviews)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+    }
 }

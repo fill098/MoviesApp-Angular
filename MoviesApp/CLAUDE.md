@@ -53,7 +53,7 @@ Project references:
   - The generic `IRepository<T>` / abstract `Repository<T>` has `GetAllAsync` (no tracking), `GetByIdAsync` (tracked), and `AddAsync`/`UpdateAsync`/`DeleteAsync`, which each call `SaveChangesAsync`. All of these methods are `virtual`.
   - Each entity has its own repository (e.g. `IDirectorRepository : IRepository<Director>`). It **overrides** the generic methods when it needs `Include`s or sorting. Don't redeclare an inherited method in the entity's interface: that's CS0108, a build error. The entity's interface only adds new methods.
   - `DirectorRepository` overrides `GetAllAsync` (includes Movies, sorted by LastName then FirstName) and `GetByIdAsync` (includes Movies, no tracking, for reading). It adds `GetByIdTrackedAsync` (includes Movies, tracked) for update and delete.
-  - `IMovieRepository`/`MovieRepository` exist but are empty and not registered yet.
+  - `MovieRepository` overrides `GetAllAsync` (sorted by Title) and `GetByIdAsync`, both without tracking and including Director, Actors and Reviews.
 - Mappers references Dtos and Domain.
 - DataAccess references Domain.
 - Dtos and Common reference no other projects.
@@ -80,7 +80,7 @@ The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFr
   - `DirectorMappingConfig` maps:
     - `Director → DirectorReadDto` (`FullName`; `MoviesDirected` from `Movies`, so the movies must be `Include`d);
     - `CreateDirectorDto → Director` and `UpdateDirectorDto → Director`. Update uses `_mapper.Map(dto, trackedEntity)`, which only overwrites the DTO's fields and keeps Id, UserId, CreatedDate and Movies.
-  - `MovieMappingConfig` is empty.
+  - `MovieMappingConfig` maps `Movie → MovieReadDto` (`DirectorName`, `Actors` as full names, `AverageRating` rounded to 1 decimal and `ReviewCount`), so Director, Actors and Reviews must be `Include`d. `GET api/movies` and `GET api/movies/{id:int}` exist (any logged-in user).
   - `DirectorService` uses `IMapper`; `AuthService` still maps by hand.
 - **MovieApp.Services**:
   - `Abstractions/` holds the interfaces and `Implementations/` the classes.
