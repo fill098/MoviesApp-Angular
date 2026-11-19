@@ -11,5 +11,6 @@ public class ActorMappingConfig : IRegister
         config.NewConfig<Actor, ActorReadDto>()
             .Map(dest => dest.MoviesActedIn, src => src.Movies.Select(m => m.Title).ToList());
         config.NewConfig<CreateActorDto, Actor>();
+        config.NewConfig<UpdateActorDto, Actor>();
     }
 }

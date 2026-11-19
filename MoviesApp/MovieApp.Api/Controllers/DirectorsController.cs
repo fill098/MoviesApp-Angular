@@ -43,7 +43,7 @@ public class DirectorsController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = director.Id }, director);
     }
 
-    [HttpPatch("{id:int}")]
+    [HttpPut("{id:int}")]
     [Authorize(Roles = Roles.Admin)]
     public async Task<ActionResult<DirectorReadDto>> Update(int id, UpdateDirectorDto request, CancellationToken cancellationToken = default)
     {

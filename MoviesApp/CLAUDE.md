@@ -52,11 +52,14 @@ Project references:
 - Repositories (`DataAccess/Repositories`, registered in `AddDataAccess`):
   - The generic `IRepository<T>` / abstract `Repository<T>` has `GetAllAsync` (no tracking), `GetByIdAsync` (tracked), and `AddAsync`/`UpdateAsync`/`DeleteAsync`, which each call `SaveChangesAsync`. All of these methods are `virtual`.
   - Each entity has its own repository (e.g. `IDirectorRepository : IRepository<Director>`). It **overrides** the generic methods when it needs `Include`s or sorting. Don't redeclare an inherited method in the entity's interface: that's CS0108, a build error. The entity's interface only adds new methods.
-  - `DirectorRepository` overrides `GetAllAsync` (includes Movies, sorted by LastName then FirstName) and `GetByIdAsync` (includes Movies, no tracking, for reading). It adds `GetByIdTrackedAsync` (includes Movies, tracked) for update and delete.
+  - `DirectorRepository` overrides `GetAllAsync` (includes Movies, sorted by LastName then FirstName) and `GetByIdAsync` (includes Movies, no tracking, for reading). It adds `GetByIdTrackedAsync` (includes Movies, tracked) for update and delete, and `ExistsDirectorAsync` (an `AnyAsync` check, used by `MovieService` to validate `DirectorId`).
   - `MovieRepository` overrides `GetAllAsync` (sorted by Title) and `GetByIdAsync`, both without tracking and including Director, Actors and Reviews.
+  - `ActorRepository` overrides `GetAllAsync` (sorted by LastName then FirstName) and `GetByIdAsync`, both without tracking and including Movies. It adds `GetByIdTrackedAsync` (includes Movies, tracked) for update and delete.
 - Mappers references Dtos and Domain.
 - DataAccess references Domain.
-- Dtos and Common reference no other projects.
+- Dtos and Common reference no other projects. A `using MovieApp.Domain...` in a DTO file is a CS0234 build error; DTOs carry enums such as `Genre` as `string`.
+
+The `MoviesApp/`, `MoviesApp.DataAccess/` and `MoviesApp.Domain/` folders next to the solution hold only stale `bin`/`obj` output from the old project names. They are not projects; ignore them.
 - Mappers holds the `Mapster` and `Mapster.DependencyInjection` package references. Services also references `Mapster` because it injects `IMapper`.
 
 The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFramework`/`Nullable`/`ImplicitUsings` from the template. That's harmless, but leave those properties out of new projects.
@@ -71,7 +74,7 @@ The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFr
 - **MovieApp.Common**:
   - `Settings/JwtSettings` (section `Jwt`; `Issuer`, `Audience`, `SecretKey` with at least 32 chars, `ExpirationInMinutes`; constant `RoleClaimType = "role"`).
   - `Exceptions/` holds the app's exception types. The folder was renamed, but the files still declare the old misspelled namespace `MovieApp.Common.Extensinons`, so `using` statements must match the namespace, not the folder. The types are: abstract `AppException`, plus `BadRequestException` (with an `Errors` list), `UnauthorizedException`, `ForbiddenException`, `NotFoundException` and `ConflictException`. Services throw these, and the API's `GlobalExceptionHandler` turns them into HTTP status codes.
-- **MovieApp.Dtos**: request/response classes grouped by feature (`Auth/`, `Users/`, `Directors/`). `Directors/` holds `DirectorReadDto` (includes `FullName` and `MoviesDirected`, a list of titles), plus `CreateDirectorDto` and `UpdateDirectorDto`. The create and update DTOs have the same fields on purpose, with `[StringLength]` matching `DirectorConfiguration`. They have no Id, UserId or Movies. `Common/ErrorResponse` (`StatusCode`, `Message`, `Errors`, `TraceId`) is the body of **every** error response. Validation uses DataAnnotations.
+- **MovieApp.Dtos**: request/response classes grouped by feature (`Auth/`, `Users/`, `Directors/`, `Actors/`, `Movies/`). `Actors/` follows the Directors pattern (`ActorReadDto` with `FullName` and `MoviesActedIn`; identical `CreateActorDto`/`UpdateActorDto`). `Movies/CreateMovieDto` takes `Genre` as a string and `DirectorId` plus `ActorIds` instead of navigation objects. `Directors/` holds `DirectorReadDto` (includes `FullName` and `MoviesDirected`, a list of titles), plus `CreateDirectorDto` and `UpdateDirectorDto`. The create and update DTOs have the same fields on purpose, with `[StringLength]` matching `DirectorConfiguration`. They have no Id, UserId or Movies. `Common/ErrorResponse` (`StatusCode`, `Message`, `Errors`, `TraceId`) is the body of **every** error response. Validation uses DataAnnotations.
 - **MovieApp.Mappers** (Mapster):
   - `AddMappers()` uses `TypeAdapterConfig.GlobalSettings` with `RequireExplicitMapping = true`.
   - It scans this assembly for `IRegister` classes in `Configurations/`, compiles them at startup (a broken mapping crashes startup), and registers `IMapper` (`ServiceMapper`, scoped).
@@ -80,8 +83,9 @@ The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFr
   - `DirectorMappingConfig` maps:
     - `Director → DirectorReadDto` (`FullName`; `MoviesDirected` from `Movies`, so the movies must be `Include`d);
     - `CreateDirectorDto → Director` and `UpdateDirectorDto → Director`. Update uses `_mapper.Map(dto, trackedEntity)`, which only overwrites the DTO's fields and keeps Id, UserId, CreatedDate and Movies.
-  - `MovieMappingConfig` maps `Movie → MovieReadDto` (`DirectorName`, `Actors` as full names, `AverageRating` rounded to 1 decimal and `ReviewCount`), so Director, Actors and Reviews must be `Include`d. `GET api/movies` and `GET api/movies/{id:int}` exist (any logged-in user).
-  - `DirectorService` uses `IMapper`; `AuthService` still maps by hand.
+  - `ActorMappingConfig` maps `Actor → ActorReadDto` (`MoviesActedIn` from `Movies`, so they must be `Include`d) and `CreateActorDto → Actor` / `UpdateActorDto → Actor` (update maps onto the tracked entity, like Directors).
+  - `MovieMappingConfig` maps `Movie → MovieReadDto` (`DirectorName`, `Actors` as full names, `AverageRating` rounded to 1 decimal and `ReviewCount`), so Director, Actors and Reviews must be `Include`d. It has no `CreateMovieDto → Movie` mapping yet, and `Genre` (string → enum) plus `ActorIds` (ids → loaded `Actor` entities) need handling in the service or the config.
+  - `DirectorService`, `ActorService` and `MovieService` use `IMapper`; `AuthService` still maps by hand.
 - **MovieApp.Services**:
   - `Abstractions/` holds the interfaces and `Implementations/` the classes.
   - `Models/` holds internal types such as `TokenResult(Token, ExpiresAt)`.
@@ -95,6 +99,8 @@ The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFr
     - Get all / get by id / create / update / delete. An unknown id throws `NotFoundException`.
     - Create sets `UserId` from `ICurrentUser.Id`.
     - Delete must throw `ConflictException` (409) when the director still has movies, because Director→Movies is `Restrict` and the database would otherwise fail with a 500.
+  - `ActorService`: same shape as `DirectorService` (get all / get by id / create / update / delete; create sets `UserId`). Delete needs no conflict check because the `MovieActors` links cascade.
+  - `MovieService`: get all / get by id. Create is in progress; it injects `IDirectorRepository` to check `DirectorId`. Validation failures must throw `BadRequestException`, not `ArgumentException` (which `GlobalExceptionHandler` turns into a 500).
 - **MovieApp.Api** (API):
   - `Program.cs` chains `AddDataAccess` → `AddMappers` → `AddServices` → `AddApi`, then `UseAuthentication` / `UseAuthorization`. Every `Add*` method in the chain must return `IServiceCollection`.
   - `Extensions/ServiceCollectionExtensions.AddApi()` sets up the API project:
@@ -114,8 +120,10 @@ The new `.csproj` files (Common, Dtos, Mappers, Services) still repeat `TargetFr
     - `AuthController` is `[AllowAnonymous]`. It has `POST api/auth/register` (returns 201 with a `UserReadDto`) and `POST api/auth/login` (returns 200 with a `LogInUserResponseDto`). Its actions accept a `CancellationToken` but don't pass it on yet.
     - `DirectorsController`:
       - `GET api/directors` and `GET api/directors/{id:int}`: any logged-in user.
-      - `POST` (201 with `CreatedAtAction(nameof(GetById))`), `PUT {id:int}` (200 with the updated `DirectorReadDto`) and `DELETE {id:int}` (204): `[Authorize(Roles = Roles.Admin)]` on each action, not on the controller.
+      - `POST` (201 with `CreatedAtAction(nameof(GetById))`), `PATCH {id:int}` (200 with the updated `DirectorReadDto`; it takes the full `UpdateDirectorDto`, so it behaves like a PUT) and `DELETE {id:int}` (204): `[Authorize(Roles = Roles.Admin)]` on each action, not on the controller.
       - It passes the `CancellationToken` through to the service and repository.
+    - `ActorsController` has the same five endpoints as `DirectorsController` (including `PATCH {id:int}`).
+    - `MoviesController` has the two GETs and an admin-only `POST`; the service side of create is in progress, and update/delete are not written yet.
     - Controllers stay thin and call a service interface. They don't check for `null`: services throw, and `GlobalExceptionHandler` turns the exception into the status code.
     - Catalogue data (directors, movies, actors) is admin-only to change. Customers add reviews.
     - 401/403 responses come from the authorization middleware, so they have no `ErrorResponse` body.

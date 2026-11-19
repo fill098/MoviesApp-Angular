@@ -16,7 +16,6 @@ public class ActorsController : ApiControllerBase
     }
 
     [HttpGet]
-
     public async Task<ActionResult<List<ActorReadDto>>> GetAll(CancellationToken cancellation = default)
     {
         var actors = await _actorService.GetAllActorsAsync(cancellation);
@@ -24,7 +23,6 @@ public class ActorsController : ApiControllerBase
     }
 
     [HttpGet("{id:int}")]
-
     public async Task<ActionResult<ActorReadDto>> GetById(int id, CancellationToken cancellationToken)
     {
         var actor = await _actorService.GetActorByIdAsync(id, cancellationToken);
@@ -33,17 +31,25 @@ public class ActorsController : ApiControllerBase
 
     [HttpPost]
     [Authorize(Roles = Roles.Admin)]
-
     public async Task<ActionResult<ActorReadDto>> Create(CreateActorDto request, CancellationToken cancellationToken = default)
     {
         var newActor = await _actorService.CreateActorAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = newActor.Id}, newActor);
     }
 
-    [HttpPatch]
+    [HttpPut("{id:int}")]
     [Authorize(Roles = Roles.Admin)]
+    public async Task<ActionResult<ActorReadDto>> Update(int id, UpdateActorDto request, CancellationToken cancellationToken = default)
+    {
+        var updatedActor = await _actorService.UpdateActorAsync(id, request, cancellationToken);
+        return Ok(updatedActor);
+    }
 
-
-
-
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
+    {
+        await _actorService.DeleteActorAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

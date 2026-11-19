@@ -28,4 +28,16 @@ public class ActorRepository : Repository<Actor>, IActorRepository
             .Include(a => a.Movies)
             .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
     }
+
+
+    public async Task<Actor?> GetByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Include(a => a.Movies)
+            .FirstOrDefaultAsync(a => a.Id == id, cancellationToken);
+    }
+    public Task<List<Actor>> GetByIdsTrackedAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        return DbSet.Where(a => ids.Contains(a.Id)).ToListAsync(cancellationToken);
+    }
 }

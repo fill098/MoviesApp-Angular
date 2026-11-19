@@ -35,4 +35,9 @@ public class DirectorRepository : Repository<Director>, IDirectorRepository
             .Include(d => d.Movies)
             .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
     }
+
+    public async Task<bool> ExistsDirectorAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await DbSet.AnyAsync(d => d.Id == id, cancellationToken);
+    }
 }

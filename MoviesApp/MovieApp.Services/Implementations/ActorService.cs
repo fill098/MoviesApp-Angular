@@ -52,4 +52,26 @@ public class ActorService : IActorService
 
         return _mapper.Map<ActorReadDto>(newActor);
     }
+
+    public async Task<ActorReadDto> UpdateActorAsync(int id, UpdateActorDto request, CancellationToken cancellationToken = default)
+    {
+        var actor = await _actorRepository.GetByIdTrackedAsync(id, cancellationToken);
+        if (actor is null)
+        {
+            throw new NotFoundException(nameof(Actor), id);
+        }
+        _mapper.Map(request, actor);
+        await _actorRepository.UpdateAsync(actor, cancellationToken);
+        return _mapper.Map<ActorReadDto>(actor);
+    }
+
+    public async Task DeleteActorAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var actorDb  = await  _actorRepository.GetByIdTrackedAsync(id, cancellationToken);
+        if (actorDb is null)
+        {
+            throw new NotFoundException(nameof(Actor), id);
+        }
+        await _actorRepository.DeleteAsync(actorDb, cancellationToken);
+    }
 }

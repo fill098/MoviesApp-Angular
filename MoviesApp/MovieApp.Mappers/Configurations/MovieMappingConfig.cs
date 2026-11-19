@@ -13,7 +13,7 @@ public class MovieMappingConfig : IRegister
             .Map(dest => dest.Actors, src => src.Actors.Select(a => a.FullName).ToList())
             .Map(dest => dest.AverageRating, src => src.Reviews.Count == 0 ? 0 : Math.Round(src.Reviews.Average(r => r.Rating), 1))
             .Map(dest => dest.ReviewCount, src => src.Reviews.Count);
-
-
+        config.NewConfig<CreateMovieDto, Movie>()
+            .Ignore(dest => dest.Genre);
     }
 }
