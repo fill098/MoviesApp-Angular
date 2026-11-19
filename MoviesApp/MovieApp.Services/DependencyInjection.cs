@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<IDirectorService, DirectorService>();
         services.AddScoped<IMovieService, MovieService>();
         services.AddScoped<IActorService, ActorService>();
+        services.AddScoped<IReviewService, ReviewService>();
 
         return services;
     }
