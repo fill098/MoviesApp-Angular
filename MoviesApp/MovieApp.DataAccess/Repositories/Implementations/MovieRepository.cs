@@ -32,4 +32,13 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
             .Include(m => m.Reviews)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
     }
+
+    public Task<Movie?> GetByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return DbSet
+            .Include(m => m.Director)
+            .Include(m => m.Actors)
+            .Include(m => m.Reviews)
+            .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
+    }
 }

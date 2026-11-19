@@ -1,7 +1,6 @@
 using MapsterMapper;
 using MovieApp.Common.Extensinons;
 using MovieApp.DataAccess.Repositories.Abstractions;
-using MovieApp.DataAccess.Repositories.Implementations;
 using MovieApp.Domain.Entities;
 using MovieApp.Domain.Enums;
 using MovieApp.Dtos.Movies;
@@ -49,28 +48,15 @@ public class MovieService : IMovieService
 
     public async Task<MovieReadDto> CreateMovieAsync(CreateMovieDto createNewMovie, CancellationToken cancellationToken = default)
     {
-        if (!Enum.TryParse<Genre>(createNewMovie.Genre, ignoreCase: true, out var genre) || !Enum.IsDefined(genre))
-        {
-            throw new BadRequestException($"Invalid genre: {createNewMovie.Genre}",
-                [$"Allowed values: {string.Join(", ", Enum.GetNames<Genre>())}"]);
-        }
+        var validGenre = ParseGenre(createNewMovie.Genre);
 
-        if (!await _directorRepository.ExistsDirectorAsync(createNewMovie.DirectorId, cancellationToken))
-        {
-            throw new NotFoundException(nameof(Director), createNewMovie.DirectorId);
-        }
+        await EnsureDirectorExistsAsync(createNewMovie.DirectorId, cancellationToken);
 
-        var actorIds = createNewMovie.ActorIds.Distinct().ToList();
-        var actors = await _actorRepository.GetByIdsTrackedAsync(actorIds, cancellationToken);
-        if (actors.Count != actorIds.Count)
-        {
-            var missing = actorIds.Except(actors.Select(a => a.Id));
-            throw new BadRequestException($"Unknown actor id(s): {string.Join(", ", missing)}");
-        }
+        var validActors = await LoadActorsAsync(createNewMovie.ActorIds, cancellationToken);
 
         var movie = _mapper.Map<Movie>(createNewMovie);
-        movie.Genre = genre;
-        movie.Actors = actors;
+        movie.Genre = validGenre;
+        movie.Actors = validActors;
         movie.UserId = _currentUser.Id;
 
         await _movieRepository.AddAsync(movie, cancellationToken);
@@ -80,4 +66,73 @@ public class MovieService : IMovieService
         return _mapper.Map<MovieReadDto>(created!);
     }
 
+    public async Task<MovieReadDto> UpdateMovieAsync(int id, UpdateMovieDto updateMovie, CancellationToken cancellationToken = default)
+    {
+        var movieDb = await _movieRepository.GetByIdTrackedAsync(id, cancellationToken);
+        if (movieDb is null)
+        {
+            throw new NotFoundException(nameof(Movie), id);
+        }
+
+        var validGenre = ParseGenre(updateMovie.Genre);
+        await EnsureDirectorExistsAsync(updateMovie.DirectorId, cancellationToken);
+        var validActors = await LoadActorsAsync(updateMovie.ActorIds, cancellationToken);
+
+        _mapper.Map(updateMovie, movieDb);
+        movieDb.Genre = validGenre;
+
+        movieDb.Actors.Clear();
+        foreach (var actor in validActors)
+        {
+            movieDb.Actors.Add(actor);
+        }
+
+        await _movieRepository.UpdateAsync(movieDb, cancellationToken);
+
+        var updated = await _movieRepository.GetByIdAsync(id, cancellationToken);
+
+        return _mapper.Map<MovieReadDto>(updated!);
+    }
+    public async Task DeleteMovieAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var movieDb = await _movieRepository.GetByIdTrackedAsync(id, cancellationToken);
+        if(movieDb is null)
+        {
+            throw new NotFoundException(nameof(Movie), id);
+        }
+        await _movieRepository.DeleteAsync(movieDb, cancellationToken);
+    }
+
+    #region Private helpers
+    private static Genre ParseGenre(string value)
+    {
+        if (!Enum.TryParse<Genre>(value, ignoreCase: true, out var genre) || !Enum.IsDefined(genre))
+        {
+            throw new BadRequestException($"Invalid genre: {value}",
+                [$"Allowed values: {string.Join(", ", Enum.GetNames<Genre>())}"]);
+        }
+        return genre;
+    }
+
+    private async Task EnsureDirectorExistsAsync(int directorId, CancellationToken cancellationToken)
+    {
+        if (!await _directorRepository.ExistsDirectorAsync(directorId, cancellationToken))
+        {
+            throw new BadRequestException($"Unknown director id: {directorId}");
+        }
+    }
+
+    private async Task<List<Actor>> LoadActorsAsync(List<int> ids, CancellationToken cancellationToken)
+    {
+        var actorIds = ids.Distinct().ToList();
+        var actors = await _actorRepository.GetByIdsTrackedAsync(actorIds, cancellationToken);
+        if (actors.Count != actorIds.Count)
+        {
+            var missing = actorIds.Except(actors.Select(a => a.Id));
+            throw new BadRequestException($"Unknown actor id(s): {string.Join(", ", missing)}");
+        }
+        return actors;
+    }
+
+    #endregion
 }

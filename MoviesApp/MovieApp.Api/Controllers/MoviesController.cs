@@ -22,7 +22,7 @@ public class MoviesController : ApiControllerBase
     {
         var movies = await _movieService.GetAllMoviesAsync(cancellationToken);
         return Ok(movies);
-    }
+    }   
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<MovieReadDto>> GetById(int id, CancellationToken cancellationToken = default)
@@ -40,4 +40,21 @@ public class MoviesController : ApiControllerBase
         return CreatedAtAction(nameof(GetById), new { id = movie.Id }, movie);
     }
 
+    [HttpPatch("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
+
+    public async Task<ActionResult<MovieReadDto>> Update(int id, UpdateMovieDto request, CancellationToken cancellationToken = default)
+    {
+        var movie = await _movieService.UpdateMovieAsync(id, request, cancellationToken);
+        return Ok(movie);
+    }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = Roles.Admin)]
+
+    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
+    {
+        await _movieService.DeleteMovieAsync(id, cancellationToken);
+        return NoContent();
+    }
 }

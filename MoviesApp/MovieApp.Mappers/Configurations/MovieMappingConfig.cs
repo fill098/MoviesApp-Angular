@@ -15,5 +15,7 @@ public class MovieMappingConfig : IRegister
             .Map(dest => dest.ReviewCount, src => src.Reviews.Count);
         config.NewConfig<CreateMovieDto, Movie>()
             .Ignore(dest => dest.Genre);
+        config.NewConfig<UpdateMovieDto, Movie>()
+            .Ignore(dest => dest.Genre);
     }
 }

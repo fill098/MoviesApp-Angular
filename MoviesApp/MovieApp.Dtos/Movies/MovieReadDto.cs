@@ -1,6 +1,3 @@
-using MovieApp.Domain.Entities;
-using MovieApp.Domain.Enums;
-
 namespace MovieApp.Dtos.Movies;
 
 public class MovieReadDto

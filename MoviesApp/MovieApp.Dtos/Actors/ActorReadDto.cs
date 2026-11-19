@@ -1,5 +1,3 @@
-using MovieApp.Domain.Entities;
-
 namespace MovieApp.Dtos.Actors;
 
 public class ActorReadDto
