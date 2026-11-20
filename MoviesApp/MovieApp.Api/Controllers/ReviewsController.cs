@@ -32,4 +32,17 @@ public class ReviewsController : ApiControllerBase
         return Ok(review);
     }
 
+    [HttpPost]
+    public async Task<ActionResult<ReviewReadDto>> Create(CreateReviewDto request, CancellationToken cancellationToken)
+    {
+        var newReview = await _reviewService.CreateReviewAsync(request, cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { id = newReview.Id }, newReview);
+    }
+
+    [HttpPatch("{id:int}")]
+    public async Task<ActionResult<ReviewReadDto>> Update(int id,UpdateReviewDto request, CancellationToken cancellationToken)
+    {
+        var updatedReview = await _reviewService.UpdateReviewAsync(id, request, cancellationToken);
+        return Ok(updatedReview);
+    }
 }

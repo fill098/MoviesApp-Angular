@@ -11,6 +11,7 @@ public class ReviewMappingConfig : IRegister
         config.NewConfig<Review, ReviewReadDto>()
         .Map(dest => dest.MovieTitle, src => src.Movie.Title)
         .Map(dest => dest.UserName, src => src.User!.UserName);
-
+        config.NewConfig<CreateReviewDto, Review>();
+        config.NewConfig<UpdateReviewDto, Review>();
     }
 }

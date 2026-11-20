@@ -38,4 +38,14 @@ public class ReviewRepository : Repository<Review>, IReviewRepository
             User = new User { UserName = r.User!.UserName }
         });
     }
+
+    public Task<bool> ExistsForUserAndMovieAsync(string userId, int movieId, CancellationToken cancellationToken = default)
+    {
+        return DbSet.AnyAsync(r => r.UserId == userId && r.MovieId == movieId, cancellationToken);
+    }
+
+    public Task<Review?> GetByIdTrackedAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return DbSet.FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
+    }
 }

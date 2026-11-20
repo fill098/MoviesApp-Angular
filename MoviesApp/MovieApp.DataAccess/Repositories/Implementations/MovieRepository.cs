@@ -41,4 +41,9 @@ public class MovieRepository : Repository<Movie>, IMovieRepository
             .Include(m => m.Reviews)
             .FirstOrDefaultAsync(m => m.Id == id, cancellationToken);
     }
+
+    public Task<bool> ExistsMovieAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return DbSet.AnyAsync(m => m.Id == id, cancellationToken);
+    }
 }

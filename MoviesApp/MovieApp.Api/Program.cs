@@ -13,7 +13,7 @@ builder.Services
     .AddServices()
     .AddApi();
 
-    
+
 var app = builder.Build();
 
 // => Errors: an exception thrown anywhere after this line (controllers, services, repositories) ends up here, and GlobalExceptionHandler (registered in AddApi()) turns it into an ErrorResponse.
